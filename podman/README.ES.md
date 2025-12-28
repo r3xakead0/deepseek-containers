@@ -1,14 +1,14 @@
-# Ollama + Open WebUI + DeepSeek with Podman Compose
+# Ollama + Open WebUI + DeepSeek con Podman Compose
 
-Local stack to run **Ollama** (model server) + **Open WebUI** (chat-style web interface) using **Podman Compose**.
+Stack local para ejecutar **Ollama** (servidor de modelos) + **Open WebUI** (interfaz web tipo chat) usando **Podman Compose**.
 
 ---
 
-## Quick architecture
+## Arquitectura rápida
 
-- **ollama** → Model API at `http://localhost:11434`
-- **open-webui** → Web interface at `http://localhost:3000`
-- **model-loader** → One-shot container that downloads the `deepseek-r1:1.5b` model and then exits
+- **ollama** → API de modelos en `http://localhost:11434`
+- **open-webui** → Interfaz web en `http://localhost:3000`
+- **model-loader** → Contenedor one-shot que descarga el modelo `deepseek-r1:1.5b` y luego finaliza
 
 ```mermaid
 flowchart TB
@@ -67,21 +67,21 @@ flowchart TB
 
 ---
 
-## Requirements
+## Requisitos
 
 - Podman
-- Podman Compose (`podman compose` or `podman-compose`)
-- Free ports:
+- Podman Compose (`podman compose` o `podman-compose`)
+- Puertos libres:
   - `11434` (Ollama)
   - `3000` (Open WebUI)
 
-> Note (SELinux): volumes use `:Z` to avoid permission errors on systems with SELinux enabled.
+> Nota (SELinux): los volúmenes usan `:Z` para evitar errores de permisos en sistemas con SELinux activo.
 
 ---
 
-## 1) Installation
+## 1) Instalación
 
-### 1.1 Install Podman
+### 1.1 Instalar Podman
 
 **Fedora / RHEL / CentOS**
 ```bash
@@ -100,101 +100,101 @@ podman machine init
 podman machine start
 ```
 
-Verify:
+Verificar:
 ```bash
 podman --version
 ```
 
 ---
 
-### 1.2 Install Podman Compose
+### 1.2 Instalar Podman Compose
 
-**Option A: podman compose**
+**Opción A: podman compose**
 ```bash
 podman compose version
 ```
 
-**Option B: podman-compose**
-Install:
+**Opción B: podman-compose**
+Instalar:
 ```bash
 pipx install podman-compose
-# or
+# o
 pip install --user podman-compose
 ```
 
-Verify:
+Verificar:
 ```bash
 podman-compose --version
 ```
 
 ---
 
-## 2) Configuration
+## 2) Configuración
 
-Create a `.env` file in the same directory as `podman-compose.yml`:
+Crear un archivo `.env` en el mismo directorio que `podman-compose.yml`:
 
 ```env
 WEBUI_SECRET_KEY=change-me-to-a-long-random-secret
 ENABLE_SIGNUP=true
 ```
 
-Generate a secure secret:
+Generar una clave segura:
 ```bash
 openssl rand -hex 32
 ```
 
 ---
 
-## 3) Execution
+## 3) Ejecución
 
-From the project directory:
+Desde el directorio del proyecto:
 
 ```bash
 podman compose -f podman-compose.yml up -d
 ```
 
-Check status:
+Ver estado:
 ```bash
 podman ps
 podman compose -f podman-compose.yml ps
 ```
 
-Access:
+Accesos:
 - Open WebUI → http://localhost:3000
 - Ollama API → http://localhost:11434
 
-> On first access, Open WebUI will ask you to create the first user (admin). This is expected behavior.
+> En el primer acceso, Open WebUI solicitará crear el primer usuario (admin). Es el comportamiento esperado.
 
 ---
 
-## 4) Testing and validation
+## 4) Pruebas y validación
 
-### 4.1 Verify Ollama
+### 4.1 Verificar Ollama
 ```bash
 curl http://localhost:11434
 ```
 
-Expected response:
+Respuesta esperada:
 ```
 Ollama is running
 ```
 
 ---
 
-### 4.2 List models
+### 4.2 Listar modelos
 ```bash
 curl http://localhost:11434/api/tags
 ```
 
 ---
 
-### 4.3 Validate Open WebUI
-Open in the browser:
+### 4.3 Validar Open WebUI
+Abrir en el navegador:
 ```
 http://localhost:3000
 ```
 
-Create a user, log in, and test a chat with the model.
+Crear usuario, iniciar sesión y probar un chat con el modelo.
 
 ---
 
@@ -207,58 +207,58 @@ podman logs model-loader
 
 ---
 
-## 5) Stop and restart
+## 5) Detener y reiniciar
 
-### Stop
+### Detener
 ```bash
 podman compose -f podman-compose.yml stop
 ```
 
-### Start again
+### Iniciar nuevamente
 ```bash
 podman compose -f podman-compose.yml start
 ```
 
 ---
 
-## 6) Teardown
+## 6) Destrucción
 
-### 6.1 Bring down containers (keeps data)
+### 6.1 Bajar contenedores (mantiene datos)
 ```bash
 podman compose -f podman-compose.yml down
 ```
 
-### 6.2 Full cleanup (⚠️ removes volumes)
+### 6.2 Borrado total (⚠️ elimina volúmenes)
 ```bash
 podman compose -f podman-compose.yml down -v
 ```
 
-This removes:
-- Downloaded models (Ollama)
-- Users and conversations (Open WebUI)
+Esto elimina:
+- Modelos descargados (Ollama)
+- Usuarios y conversaciones (Open WebUI)
 
 ---
 
-## Security recommendations
+## Recomendaciones de seguridad
 
-- Change `WEBUI_SECRET_KEY` to a long, random secret
-- After creating the first user, disable signups:
+- Cambiar `WEBUI_SECRET_KEY` por una clave larga y aleatoria
+- Después de crear el primer usuario, desactivar registros:
   ```env
   ENABLE_SIGNUP=false
   ```
-  then recreate containers:
+  y recrear contenedores:
   ```bash
   podman compose -f podman-compose.yml up -d --force-recreate
   ```
 
 ---
 
-## Expected final state
+## Estado esperado final
 
-- Ollama responding on `localhost:11434`
-- Open WebUI accessible on `localhost:3000`
-- Model available and functional
+- Ollama respondiendo en `localhost:11434`
+- Open WebUI accesible en `localhost:3000`
+- Modelo disponible y funcional
 
 ---
 
-🌍 Read this in: [Español](README.ES.md)
+🌍 Leer esto en: [English](README.md)
