@@ -1,0 +1,59 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-deepseek
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-secret-key-change-me-in-production}
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
+    volumes:
+      - open-webui-data:/app/backend/data
+    restart: unless-stopped
+
+  model-loader:
+    image: ollama/ollama:latest
+    container_name: model-loader
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: >
+      sh -c "
+        echo '⏳ Waiting for Ollama to be ready...' &&
+        sleep 5 &&
+        echo '📥 Downloading DeepSeek R1 1.5B...' &&
+        ollama pull deepseek-r1:1.5b &&
+        echo '✅ Model downloaded successfully!' &&
+        echo '🌐 Access the interface at: http://localhost:3000' &&
+        exit 0
+      "
+    restart: on-failure
+
+volumes:
+  ollama-data:
+    driver: local
+  open-webui-data:
+    driver: local
